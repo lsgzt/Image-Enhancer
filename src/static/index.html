@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Enhancer - Professional Photo Enhancement</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-magic"></i>
+                <span>AI Image Enhancer</span>
+            </div>
+            <nav class="nav">
+                <button class="theme-toggle" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- Hero Section -->
+            <section class="hero">
+                <h1 class="hero-title">Transform Your Photos with AI</h1>
+                <p class="hero-subtitle">Professional image enhancement powered by CodeFormer technology</p>
+            </section>
+
+            <!-- Upload Section -->
+            <section class="upload-section" id="uploadSection">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-content">
+                        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                        <h3>Drop your image here</h3>
+                        <p>or <span class="upload-link">browse files</span></p>
+                        <p class="upload-info">Supports JPG, PNG, WebP • Max 10MB</p>
+                    </div>
+                    <input type="file" id="imageInput" accept="image/*" hidden>
+                </div>
+            </section>
+
+            <!-- Settings Panel -->
+            <section class="settings-panel" id="settingsPanel" style="display: none;">
+                <div class="settings-header">
+                    <h3>Enhancement Settings</h3>
+                    <button class="settings-toggle" id="settingsToggle">
+                        <i class="fas fa-cog"></i>
+                        <span>Advanced</span>
+                    </button>
+                </div>
+                
+                <div class="settings-content" id="settingsContent">
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <input type="checkbox" id="faceAlign" checked>
+                            <span class="checkmark"></span>
+                            Face Alignment
+                            <i class="fas fa-info-circle tooltip" title="Automatically align faces for better enhancement"></i>
+                        </label>
+                    </div>
+
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <input type="checkbox" id="backgroundEnhance" checked>
+                            <span class="checkmark"></span>
+                            Background Enhancement
+                            <i class="fas fa-info-circle tooltip" title="Enhance background details and clarity"></i>
+                        </label>
+                    </div>
+
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <input type="checkbox" id="faceUpsample" checked>
+                            <span class="checkmark"></span>
+                            Face Upsampling
+                            <i class="fas fa-info-circle tooltip" title="Increase face resolution and detail"></i>
+                        </label>
+                    </div>
+
+                    <div class="setting-group">
+                        <label class="setting-label">Upscale Factor</label>
+                        <div class="slider-container">
+                            <input type="range" id="upscale" min="1" max="4" value="2" class="slider">
+                            <span class="slider-value" id="upscaleValue">2x</span>
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <label class="setting-label">Enhancement Fidelity</label>
+                        <div class="slider-container">
+                            <input type="range" id="fidelity" min="0" max="1" step="0.1" value="0.5" class="slider">
+                            <span class="slider-value" id="fidelityValue">0.5</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="enhance-btn" id="enhanceBtn">
+                    <i class="fas fa-magic"></i>
+                    Enhance Image
+                </button>
+            </section>
+
+            <!-- Processing Section -->
+            <section class="processing-section" id="processingSection" style="display: none;">
+                <div class="processing-content">
+                    <div class="spinner"></div>
+                    <h3 id="processingText">Processing your image...</h3>
+                    <p id="processingSubtext">This may take a few moments</p>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section" id="resultsSection" style="display: none;">
+                <div class="results-header">
+                    <h3>Enhancement Complete</h3>
+                    <div class="results-actions">
+                        <button class="btn btn-secondary" id="processAnotherBtn">
+                            <i class="fas fa-plus"></i>
+                            Process Another
+                        </button>
+                        <button class="btn btn-primary" id="downloadBtn">
+                            <i class="fas fa-download"></i>
+                            Download
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Image Comparison Container -->
+                <div class="comparison-container" id="comparisonContainer">
+                    <!-- This will be populated by JavaScript with the comparison slider -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 AI Image Enhancer. Powered by CodeFormer technology.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/img-comparison-slider@8/dist/index.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
+
