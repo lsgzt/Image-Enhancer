@@ -36,6 +36,7 @@ def enhance_image():
         client = Client("sczhou/CodeFormer", hf_token=hf_token)
 
         # Submit the job
+        # UPDATED: Changed api_name from "/predict" to "/inference"
         job = client.submit(
             image=handle_file(photo_path),
             face_align=face_align,
@@ -43,33 +44,31 @@ def enhance_image():
             face_upsample=face_upsample,
             upscale=upscale,
             codeformer_fidelity=codeformer_fidelity,
-            api_name="/predict"
+            api_name="/inference"
         )
 
         result = job.result()
 
-        if isinstance(result, str) and result.endswith(".webp"):
-            # Extract the hash and filename from the server path
-            path_parts = result.split("/")
-            file_hash = path_parts[-2]
-            filename = path_parts[-1]
+        # NEW: Handle tuple result (Returns tuple of 2 elements: [0] is dict with path, [1] is str)
+        if isinstance(result, (tuple, list)) and len(result) > 0:
+            result = result[0]
 
-            # Construct the local temp path where gradio_client downloads the file
-            # This assumes gradio_client downloads to a temp directory structure like /tmp/gradio/<hash>/<filename>
-            temp_base_dir = os.path.join(tempfile.gettempdir(), "gradio")
-            local_temp_path = os.path.join(temp_base_dir, file_hash, filename)
+        # Handle the result based on what the API returns (or what we extracted from tuple)
+        result_path = None
+        if isinstance(result, str):
+            result_path = result
+        elif isinstance(result, dict) and 'path' in result:
+            result_path = result['path']
 
-            if os.path.exists(local_temp_path):
-                # Create a new temporary file for the enhanced image to send back
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".webp") as enhanced_output_file:
-                    shutil.move(local_temp_path, enhanced_output_file.name)
-                    enhanced_image_path = enhanced_output_file.name
+        if result_path and os.path.exists(result_path):
+            # Create a new temporary file for the enhanced image to send back
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".webp") as enhanced_output_file:
+                shutil.copy2(result_path, enhanced_output_file.name)
+                enhanced_image_path = enhanced_output_file.name
 
-                return send_file(enhanced_image_path, mimetype='image/webp', as_attachment=True, download_name='enhanced_image.webp')
-            else:
-                return jsonify({'error': f'Enhanced file not found at: {local_temp_path}'}), 500
+            return send_file(enhanced_image_path, mimetype='image/webp', as_attachment=True, download_name='enhanced_image.webp')
         else:
-            return jsonify({'error': 'Unexpected result format from CodeFormer API', 'result': result}), 500
+            return jsonify({'error': 'Unexpected result format or file not found from CodeFormer API', 'result': str(result)}), 500
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -80,6 +79,3 @@ def enhance_image():
         # Clean up the temporary enhanced output file if it was created
         if 'enhanced_image_path' in locals() and os.path.exists(enhanced_image_path):
             os.remove(enhanced_image_path)
-
-
-
