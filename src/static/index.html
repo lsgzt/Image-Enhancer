@@ -452,16 +452,13 @@
                 <p class="section-lead">A real result from our AI Image Enhancer — a blurry, low-quality input on the left and the restored, sharpened output on the right. Drag the slider in the live tool to try your own photo.</p>
 
                 <figure class="showcase-figure">
-                    <picture>
-                        <!-- Source set fallback strategy -->
-                        <source srcset="/test_image.jpg" type="image/jpeg">
-                        <img src="/test_image.jpg"
-                             alt="Before and after comparison of an AI-enhanced face restoration: blurred old photo on the left, sharp clear face on the right."
-                             loading="lazy"
-                             width="1200"
-                             height="800"
-                             onerror="this.outerHTML='&lt;div class=&quot;showcase-fallback&quot; role=&quot;img&quot; aria-label=&quot;Before and after comparison of an AI-enhanced face restoration: blurred old photo on the left, sharp clear face on the right.&quot;&gt;Sample before/after image unavailable. Upload your own photo to try the enhancer.&lt;/div&gt;'">
-                    </picture>
+                    <img src="/test_image.jpg"
+                         alt="Before and after comparison of an AI-enhanced face restoration: blurred old photo on the left, sharp clear face on the right."
+                         width="1024"
+                         height="684"
+                         decoding="async"
+                         fetchpriority="high"
+                         onerror="if(!this.dataset.retry){this.dataset.retry='1';this.onerror=null;var s=this.src.split('?')[0];setTimeout(function(){this.src=s+'?r='+Date.now();}.bind(this),1500);}">
                     <figcaption>
                         <strong>AI Image Enhancer</strong> — Face restoration example. Original blurry photo (left) restored with detail reconstruction and upscaling (right).
                     </figcaption>

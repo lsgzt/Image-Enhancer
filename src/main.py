@@ -11,6 +11,8 @@ from src.routes.enhance import enhance_bp # Import the new blueprint
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
+# Cache static assets (images, css, js) for 1 day to survive Render free-tier cold starts
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 86400
 
 CORS(app) # Enable CORS for all origins
 
