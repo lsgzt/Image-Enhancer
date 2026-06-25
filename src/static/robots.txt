@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://enhanceit.onrender.com/sitemap.xml
