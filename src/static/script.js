@@ -28,8 +28,10 @@ const fidelityValue = document.getElementById('fidelityValue');
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
+    initializeTelegramMiniApp();
     initializeEventListeners();
     initializeTheme();
+    setupSystemThemeListener();
     updateSliderValues();
 });
 
@@ -75,26 +77,229 @@ function initializeEventListeners() {
     uploadArea.setAttribute('tabindex', '0');
 }
 
+// ============================================================
 // Theme management
+// ============================================================
+const THEME_STORAGE_KEY = 'theme';
+const THEME_USER_OVERRIDE_KEY = 'theme_user_override';
+
+function getStoredTheme() {
+    try { return localStorage.getItem(THEME_STORAGE_KEY); } catch (e) { return null; }
+}
+
+function setStoredTheme(theme) {
+    try { localStorage.setItem(THEME_STORAGE_KEY, theme); } catch (e) {}
+}
+
+function getUserOverride() {
+    try { return localStorage.getItem(THEME_USER_OVERRIDE_KEY) === '1'; } catch (e) { return false; }
+}
+
+function setUserOverride(isOverride) {
+    try { localStorage.setItem(THEME_USER_OVERRIDE_KEY, isOverride ? '1' : '0'); } catch (e) {}
+}
+
+function systemPrefersDark() {
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+function resolveInitialTheme() {
+    // 1. If the user has manually toggled before, respect that
+    if (getUserOverride()) {
+        return getStoredTheme() || (systemPrefersDark() ? 'dark' : 'light');
+    }
+    // 2. If Telegram gave us a colorScheme, trust it first
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.colorScheme) {
+        return window.Telegram.WebApp.colorScheme === 'dark' ? 'dark' : 'light';
+    }
+    // 3. Otherwise fall back to OS preference
+    return systemPrefersDark() ? 'dark' : 'light';
+}
+
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    setStoredTheme(theme);
+    updateThemeIcon(theme);
+    // Sync the meta theme-color so mobile chrome matches
+    const themeColor = theme === 'dark' ? '#0f172a' : '#6366f1';
+    document.querySelectorAll('meta[name="theme-color"]').forEach(el => {
+        el.setAttribute('content', themeColor);
+    });
+}
+
 function initializeTheme() {
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    updateThemeIcon(savedTheme);
+    const theme = resolveInitialTheme();
+    applyTheme(theme);
 }
 
 function toggleTheme() {
     const currentTheme = document.documentElement.getAttribute('data-theme');
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
-    updateThemeIcon(newTheme);
+    applyTheme(newTheme);
+    setUserOverride(true); // mark this as a deliberate user choice
+    // Light haptic on Telegram
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+        try { window.Telegram.WebApp.HapticFeedback.selectionChanged(); } catch (e) {}
+    }
 }
 
 function updateThemeIcon(theme) {
+    if (!themeToggle) return;
     const icon = themeToggle.querySelector('i');
     icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
 }
+
+// Live-update theme when the OS preference changes (only if the user
+// has NOT manually picked a theme).
+function setupSystemThemeListener() {
+    if (!window.matchMedia) return;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = () => {
+        if (getUserOverride()) return; // user already decided, leave it alone
+        applyTheme(systemPrefersDark() ? 'dark' : 'light');
+    };
+    if (mq.addEventListener) {
+        mq.addEventListener('change', handler);
+    } else if (mq.addListener) {
+        mq.addListener(handler); // older Safari
+    }
+}
+
+// ============================================================
+// Telegram Mini App integration
+// ============================================================
+function isTelegramMiniApp() {
+    return !!(window.Telegram && window.Telegram.WebApp);
+}
+
+function initializeTelegramMiniApp() {
+    const tma = isTelegramMiniApp() ? window.Telegram.WebApp : null;
+
+    if (tma) {
+        // 1. Mark the root so CSS can adapt
+        document.documentElement.classList.add('tma-mode');
+        document.body.classList.add('tma-mode');
+
+        // 2. Tell Telegram we're ready (hides the loading splash)
+        try { tma.ready(); } catch (e) {}
+
+        // 3. Expand to full available height
+        try { tma.expand(); } catch (e) {}
+
+        // 4. Apply Telegram theme params as CSS variables (header bg, etc.)
+        try {
+            if (tma.themeParams) {
+                const root = document.documentElement.style;
+                const tp = tma.themeParams;
+                if (tp.bg_color)        root.setProperty('--tma-bg', tp.bg_color);
+                if (tp.secondary_bg_color) root.setProperty('--tma-secondary-bg', tp.secondary_bg_color);
+                if (tp.text_color)      root.setProperty('--tma-text', tp.text_color);
+                if (tp.hint_color)      root.setProperty('--tma-hint', tp.hint_color);
+                if (tp.button_color)    root.setProperty('--tma-button', tp.button_color);
+                if (tp.button_text_color) root.setProperty('--tma-button-text', tp.button_text_color);
+                if (tp.link_color)      root.setProperty('--tma-link', tp.link_color);
+            }
+        } catch (e) {}
+
+        // 5. Honor Telegram's colorScheme if the user hasn't manually toggled
+        try {
+            if (!getUserOverride() && tma.colorScheme) {
+                applyTheme(tma.colorScheme === 'dark' ? 'dark' : 'light');
+            }
+        } catch (e) {}
+
+        // 6. React to Telegram theme events
+        try {
+            tma.onEvent('themeChanged', () => {
+                if (!getUserOverride() && tma.colorScheme) {
+                    applyTheme(tma.colorScheme === 'dark' ? 'dark' : 'light');
+                }
+            });
+        } catch (e) {}
+
+        // 7. Safe-area insets from Telegram viewport
+        try {
+            if (typeof tma.viewportStableHeight === 'number') {
+                document.documentElement.style.setProperty('--tma-viewport-h', tma.viewportStableHeight + 'px');
+            }
+            if (typeof tma.safeAreaInset === 'object' && tma.safeAreaInset) {
+                document.documentElement.style.setProperty('--tma-safe-top', (tma.safeAreaInset.top || 0) + 'px');
+                document.documentElement.style.setProperty('--tma-safe-bottom', (tma.safeAreaInset.bottom || 0) + 'px');
+            }
+        } catch (e) {}
+
+        // 8. BackButton: if shown, closing the app returns to the bot
+        try {
+            tma.BackButton.show();
+            tma.BackButton.onClick(() => {
+                try { tma.close(); } catch (e) { window.close(); }
+            });
+        } catch (e) {}
+
+        // 9. Re-route every external link through Telegram so it opens
+        //    in the in-app browser (or external browser) instead of a new tab.
+        rerouteExternalLinksForTelegram(tma);
+
+        // 10. Show the "Running in Telegram" banner unless user dismissed it
+        try {
+            if (localStorage.getItem('tma_banner_dismissed') !== '1') {
+                const banner = document.getElementById('tmaBanner');
+                if (banner) {
+                    banner.hidden = false;
+                    const closeBtn = document.getElementById('tmaBannerClose');
+                    if (closeBtn) {
+                        closeBtn.addEventListener('click', () => {
+                            banner.hidden = true;
+                            try { localStorage.setItem('tma_banner_dismissed', '1'); } catch (e) {}
+                        });
+                    }
+                }
+            }
+        } catch (e) {}
+
+        // 11. Disable the page-zoom gesture that conflicts with Telegram pull-to-close
+        try {
+            document.addEventListener('gesturestart', e => e.preventDefault());
+        } catch (e) {}
+    }
+
+    // Always-on safety nets (work outside Telegram too):
+
+    // If the file picker / drag-and-drop isn't supported in this context,
+    // disable those UI paths and surface a clear message instead of erroring.
+    if (!window.File || !window.FileReader || !window.FileList) {
+        const area = document.getElementById('uploadArea');
+        if (area) {
+            area.style.pointerEvents = 'none';
+            area.style.opacity = '0.6';
+        }
+    }
+}
+
+function rerouteExternalLinksForTelegram(tma) {
+    // Intercept clicks on links with target="_blank" so Telegram handles them
+    document.addEventListener('click', (e) => {
+        const link = e.target.closest && e.target.closest('a[href]');
+        if (!link) return;
+        const href = link.getAttribute('href');
+        if (!href) return;
+        // Skip in-page anchors and javascript: links
+        if (href.startsWith('#') || href.startsWith('javascript:')) return;
+        // Only re-route fully-qualified http(s) links
+        if (!/^https?:\/\//i.test(href)) return;
+        e.preventDefault();
+        try {
+            if (link.target === '_blank' || link.hasAttribute('data-tma-external')) {
+                tma.openLink(href, { try_instant_view: false });
+            } else {
+                tma.openLink(href);
+            }
+        } catch (err) {
+            window.open(href, '_blank', 'noopener,noreferrer');
+        }
+    });
+}
+
 
 // Drag and drop handlers
 function handleDragOver(e) {
@@ -527,12 +732,22 @@ function handleSliderKeyboard(e) {
 }
 
 // Download functionality
+//
+// In a Telegram Mini App, "downloading" the image is awkward — there is
+// no real filesystem. Instead, we forward the processed image back to
+// the user's Telegram chat via the bot, and show a toast confirming the
+// delivery. Outside Telegram the original file-download flow is used.
 function handleDownload() {
     if (!enhancedImageBlob) {
         showError('No enhanced image available for download.');
         return;
     }
-    
+
+    if (isTelegramMiniApp()) {
+        sendEnhancedImageToTelegramChat(enhancedImageBlob);
+        return;
+    }
+
     const url = URL.createObjectURL(enhancedImageBlob);
     const a = document.createElement('a');
     a.href = url;
@@ -541,9 +756,107 @@ function handleDownload() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
+
     // Show success message
     showSuccess('Image downloaded successfully!');
+}
+
+/**
+ * Upload the processed image to the backend, which then forwards it to
+ * the originating Telegram chat via the bot. Falls back to a normal
+ * browser download if anything goes wrong so the user is never stuck.
+ */
+async function sendEnhancedImageToTelegramChat(blob) {
+    const tma = window.Telegram.WebApp;
+    const initData = (tma && tma.initData) || '';
+
+    // While we are talking to the backend, lock the button so the user
+    // cannot double-tap and trigger two uploads.
+    if (downloadBtn) {
+        downloadBtn.disabled = true;
+        downloadBtn.classList.add('is-loading');
+    }
+
+    showInfo('Sending image to your Telegram chat…');
+
+    // Build a filename with a sensible extension. The blob's type wins
+    // when we can read it.
+    const mime = blob.type || 'image/jpeg';
+    const ext = mime.includes('png')  ? 'png'
+              : mime.includes('webp') ? 'webp'
+              : mime.includes('gif')  ? 'gif'
+                                      : 'jpg';
+    const filename = `enhanced_image.${ext}`;
+
+    const formData = new FormData();
+    formData.append('image', blob, filename);
+    formData.append('caption', 'Your enhanced image ✨');
+
+    try {
+        const response = await fetch('/api/telegram/send_photo', {
+            method: 'POST',
+            headers: {
+                // The backend verifies this header to ensure the request
+                // really came from a Telegram client.
+                'X-Telegram-Init-Data': initData,
+            },
+            body: formData,
+        });
+
+        // Try to parse JSON either way so we can show a useful error.
+        let payload = null;
+        try { payload = await response.json(); } catch (e) { /* non-JSON */ }
+
+        if (!response.ok || !payload || !payload.ok) {
+            const message = (payload && payload.error) || `Server returned ${response.status}`;
+            throw new Error(message);
+        }
+
+        // Notify Telegram the action completed (haptic + popup feedback).
+        try {
+            if (tma.HapticFeedback) tma.HapticFeedback.notificationOccurred('success');
+            if (tma.showPopup) {
+                tma.showPopup({
+                    title: 'Sent ✅',
+                    message: 'Image sent to your Telegram chat',
+                    buttons: [{ type: 'ok' }],
+                });
+            }
+        } catch (e) { /* not critical */ }
+
+        showSuccess('Image sent to your Telegram chat');
+    } catch (err) {
+        console.error('Failed to send image via Telegram:', err);
+        try {
+            if (tma.HapticFeedback) tma.HapticFeedback.notificationOccurred('error');
+            if (tma.showPopup) {
+                tma.showPopup({
+                    title: 'Could not send',
+                    message: 'Falling back to a regular download. ' + (err && err.message ? err.message : ''),
+                    buttons: [{ type: 'ok' }],
+                });
+            }
+        } catch (e) {}
+
+        // Fallback so the user is never left empty-handed: do a normal
+        // browser download. This is invisible inside Telegram's webview
+        // but the user at least keeps the file in app storage.
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showError('Could not send to Telegram chat: ' + (err && err.message ? err.message : 'unknown error'));
+    } finally {
+        if (downloadBtn) {
+            downloadBtn.disabled = false;
+            downloadBtn.classList.remove('is-loading');
+        }
+    }
 }
 
 // Reset application
@@ -598,6 +911,10 @@ function showSuccess(message) {
     showNotification(message, 'success');
 }
 
+function showInfo(message) {
+    showNotification(message, 'info');
+}
+
 function showNotification(message, type) {
     // Remove existing notifications
     clearNotifications();
@@ -645,11 +962,24 @@ function showNotification(message, type) {
             .notification-success {
                 border-left: 4px solid var(--success-color);
             }
-            
+
             .notification-success i:first-child {
                 color: var(--success-color);
             }
-            
+
+            .notification-info {
+                border-left: 4px solid var(--primary-color);
+            }
+
+            .notification-info i:first-child {
+                color: var(--primary-color);
+            }
+
+            .btn[disabled].is-loading {
+                opacity: 0.7;
+                cursor: progress;
+            }
+
             .notification-close {
                 background: none;
                 border: none;
@@ -727,4 +1057,35 @@ if ('serviceWorker' in navigator) {
         // Service worker registration can be added here in the future
     });
 }
+
+// ============================================================
+// Telegram-aware overrides for image handling
+// ============================================================
+//
+// In a Telegram Mini App the user is usually on a phone. Drag-and-drop
+// doesn't apply, and the system file picker behavior can differ. The
+// native <input type="file"> is still the most reliable way, so we
+// keep that as the primary path. We just hide the drag visual hint
+// and ensure the tap target stays big enough.
+
+(function patchUploadForTMA() {
+    const isTma = isTelegramMiniApp();
+    if (!isTma) return;
+
+    const style = document.createElement('style');
+    style.textContent = `
+        .tma-mode .upload-area::after {
+            content: "Tap to choose a photo";
+            display: block;
+            margin-top: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        .tma-mode #enhanceBtn {
+            /* Use Telegram's main button feel when available */
+            box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
+        }
+    `;
+    document.head.appendChild(style);
+})();
 

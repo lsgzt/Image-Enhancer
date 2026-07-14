@@ -3,11 +3,21 @@ import sys
 # DON'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
+# Load environment variables from a local .env file if present. The bot
+# token and any other secrets MUST live in .env (which is gitignored) and
+# never in source control.
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:  # pragma: no cover - dotenv is optional in production
+    pass
+
 from flask import Flask, send_from_directory
 from flask_cors import CORS # Import CORS
 from src.models.user import db
 from src.routes.user import user_bp
 from src.routes.enhance import enhance_bp # Import the new blueprint
+from src.routes.telegram import telegram_bp # Telegram Mini App endpoints
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
@@ -18,6 +28,7 @@ CORS(app) # Enable CORS for all origins
 
 app.register_blueprint(user_bp, url_prefix='/api')
 app.register_blueprint(enhance_bp, url_prefix='/api') # Register the new blueprint
+app.register_blueprint(telegram_bp)                  # already prefixed in blueprint
 
 # uncomment if you need to use database
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"

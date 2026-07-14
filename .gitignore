@@ -1,0 +1,38 @@
+# ----- Python / Flask -----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Flask instance folder (sqlite db, etc.)
+instance/
+
+# ----- Environment / secrets -----
+# Never commit real bot tokens, API keys, or any other secret.
+.env
+.env.*
+!.env.example
+
+# ----- Editors / OS -----
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ----- Logs / build artifacts ----
+*.log
+logs/
+dist/
+build/
+node_modules/
+.venv.bak/

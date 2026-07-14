@@ -15,6 +15,12 @@
     <meta name="rating" content="general">
     <meta name="theme-color" content="#6366f1">
     <meta name="color-scheme" content="light dark">
+
+    <!-- Telegram Mini App SDK (no-op outside Telegram) -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Telegram Mini App viewport (only takes effect in TMA) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
     <meta name="google-site-verification" content="4BkAfLYv-uSl8qVIjBs20f7LWkiPtwWmLFz1W8_2TEY" />
 
     <!-- Canonical URL -->
@@ -171,6 +177,14 @@
     </script>
 </head>
 <body>
+    <!-- Telegram Mini App banner (hidden by default, shown by JS when inside Telegram) -->
+    <div id="tmaBanner" class="tma-banner" role="status" aria-live="polite" hidden>
+        <i class="fab fa-telegram" aria-hidden="true"></i>
+        <span>Running inside Telegram Mini App</span>
+        <button id="tmaBannerClose" type="button" aria-label="Dismiss banner">
+            <i class="fas fa-times" aria-hidden="true"></i>
+        </button>
+    </div>
     <!-- Skip to main content link -->
     <a href="#mainContent" class="skip-link">Skip to main content</a>
 
@@ -189,6 +203,10 @@
                 <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark and light theme">
                     <i class="fas fa-moon" aria-hidden="true"></i>
                 </button>
+                <a href="https://lsgzt.github.io/support.html" class="nav-link support-nav-link" target="_blank" rel="noopener noreferrer" aria-label="Support the developer (opens in a new tab)">
+                    <i class="fas fa-heart" aria-hidden="true"></i>
+                    <span>Support</span>
+                </a>
             </nav>
         </div>
     </header>
@@ -540,6 +558,7 @@
                 <a href="#showcase">Showcase</a>
                 <a href="#faq">FAQ</a>
                 <a href="#uploadSection">Enhance a Photo</a>
+                <a href="https://lsgzt.github.io/support.html" target="_blank" rel="noopener noreferrer">Support / Tip</a>
             </nav>
             <p>&copy; 2026 AI Image Enhancer. All rights reserved.</p>
             <p class="footer-credit">Powered by <a href="https://github.com/sczhou/CodeFormer" rel="noopener noreferrer" target="_blank">CodeFormer</a> face restoration technology.</p>
@@ -552,6 +571,17 @@
             <p><strong>JavaScript is required.</strong> The AI Image Enhancer runs entirely in your browser and needs JavaScript enabled in order to upload, process, and download your enhanced photos. Please enable JavaScript and reload the page.</p>
         </div>
     </noscript>
+
+    <!-- Floating Support / Tip Button -->
+    <a href="https://lsgzt.github.io/support.html"
+       class="support-fab"
+       target="_blank"
+       rel="noopener noreferrer"
+       aria-label="Support the developer (opens in a new tab)"
+       title="Support / Give a tip">
+        <i class="fas fa-heart" aria-hidden="true"></i>
+        <span class="support-fab-label">Support</span>
+    </a>
 
     <!-- Scripts -->
     <script src="https://unpkg.com/img-comparison-slider@8/dist/index.js"></script>

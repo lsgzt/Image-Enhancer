@@ -856,3 +856,177 @@ input:focus,
     }
 }
 
+/* ============================================ */
+/* Support / Tip nav link + Floating Action Btn */
+/* ============================================ */
+.support-nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: linear-gradient(135deg, #f43f5e, #ec4899);
+    color: #fff !important;
+    padding: 0.45rem 0.9rem;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.support-nav-link:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(244, 63, 94, 0.35);
+    filter: brightness(1.05);
+}
+
+.support-fab {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    z-index: 9999;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.85rem 1.15rem;
+    background: linear-gradient(135deg, #f43f5e, #ec4899);
+    color: #ffffff !important;
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    box-shadow: 0 10px 25px rgba(236, 72, 153, 0.45),
+                0 4px 10px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    animation: support-fab-pulse 2.4s ease-in-out infinite;
+}
+
+.support-fab i {
+    font-size: 1.05rem;
+    animation: support-fab-heart 1.6s ease-in-out infinite;
+}
+
+.support-fab:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 14px 30px rgba(236, 72, 153, 0.55),
+                0 6px 14px rgba(0, 0, 0, 0.18);
+    filter: brightness(1.05);
+}
+
+.support-fab:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 6px rgba(236, 72, 153, 0.5);
+}
+
+@keyframes support-fab-pulse {
+    0%, 100% { box-shadow: 0 10px 25px rgba(236, 72, 153, 0.45), 0 4px 10px rgba(0, 0, 0, 0.15); }
+    50%      { box-shadow: 0 14px 32px rgba(236, 72, 153, 0.65), 0 6px 14px rgba(0, 0, 0, 0.18); }
+}
+
+@keyframes support-fab-heart {
+    0%, 100% { transform: scale(1); }
+    20%      { transform: scale(1.25); }
+    40%      { transform: scale(0.95); }
+    60%      { transform: scale(1.15); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .support-fab,
+    .support-fab i {
+        animation: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .support-fab {
+        right: 0.85rem;
+        bottom: 0.85rem;
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+    .support-nav-link span {
+        display: none;
+    }
+}
+
+/* ============================================ */
+/* Telegram Mini App adjustments                */
+/* ============================================ */
+
+/* The TMA banner: hidden by default, JS removes [hidden] in TMA */
+.tma-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 1rem;
+    background: linear-gradient(135deg, #229ED9, #0088cc);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+.tma-banner i { font-size: 1.1rem; }
+.tma-banner span { flex: 1; }
+.tma-banner button {
+    background: transparent;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    opacity: 0.85;
+}
+.tma-banner button:hover { opacity: 1; background: rgba(255,255,255,0.15); }
+
+/* TMA layout adjustments */
+.tma-mode, .tma-mode body {
+    /* Respect Telegram's reported viewport height */
+    min-height: var(--tma-viewport-h, 100vh);
+    /* No rubber-band overscroll inside the mini app */
+    overscroll-behavior: none;
+}
+
+.tma-mode {
+    /* Add safe-area padding for devices with notches while inside Telegram */
+    padding-top: var(--tma-safe-top, 0px);
+    padding-bottom: var(--tma-safe-bottom, 0px);
+}
+
+/* In TMA, the floating support button is redundant (Telegram has its
+   own back button + native UI). Keep it but make it less intrusive and
+   raise it so it doesn't collide with Telegram's bottom bar. */
+.tma-mode .support-fab {
+    bottom: calc(1.25rem + var(--tma-safe-bottom, 0px));
+    right: 1rem;
+    padding: 0.7rem 1rem;
+    font-size: 0.9rem;
+    /* Disable the pulse animation inside Telegram to save battery */
+    animation: none;
+}
+
+/* Tighter spacing in TMA — the container has less real estate */
+.tma-mode .container { padding: 0 0.85rem; }
+.tma-mode .hero-title { font-size: clamp(1.5rem, 6vw, 2.2rem); }
+.tma-mode .hero-subtitle { font-size: 1rem; }
+.tma-mode .upload-area { padding: 2rem 1rem; }
+
+/* Disable the drag-and-drop visual hint in TMA — touch devices don't DnD */
+.tma-mode .upload-area .upload-info::after {
+    content: " · Tap to pick a file";
+}
+
+/* Make the in-Telegram experience a bit more "app-like" */
+.tma-mode .header {
+    /* Stick the header to the top of the TMA viewport */
+    position: sticky;
+    top: var(--tma-safe-top, 0);
+    z-index: 50;
+    backdrop-filter: saturate(180%) blur(12px);
+    -webkit-backdrop-filter: saturate(180%) blur(12px);
+    background-color: color-mix(in srgb, var(--bg-primary) 85%, transparent);
+}
+.tma-mode[data-theme="dark"] .header {
+    background-color: color-mix(in srgb, var(--bg-primary) 85%, transparent);
+}
+
