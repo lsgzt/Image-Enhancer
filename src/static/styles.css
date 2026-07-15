@@ -859,61 +859,91 @@ input:focus,
 /* ============================================ */
 /* Support / Tip nav link + Floating Action Btn */
 /* ============================================ */
-.support-nav-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    background: linear-gradient(135deg, #f43f5e, #ec4899);
-    color: #fff !important;
-    padding: 0.45rem 0.9rem;
-    border-radius: var(--radius-md);
-    font-weight: 600;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+.support-nav-link,
+.support-nav-link:link,
+.support-nav-link:visited {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.4rem !important;
+    background: linear-gradient(135deg, #f43f5e, #ec4899) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    padding: 0.45rem 0.9rem !important;
+    border-radius: var(--radius-md, 0.5rem) !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease !important;
 }
 
 .support-nav-link:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(244, 63, 94, 0.35);
-    filter: brightness(1.05);
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 18px rgba(244, 63, 94, 0.35) !important;
+    filter: brightness(1.05) !important;
+    color: #ffffff !important;
 }
 
-.support-fab {
-    position: fixed;
-    right: 1.25rem;
-    bottom: 1.25rem;
-    z-index: 9999;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.85rem 1.15rem;
-    background: linear-gradient(135deg, #f43f5e, #ec4899);
+.support-fab,
+.support-fab:link,
+.support-fab:visited,
+.support-fab:hover,
+.support-fab:active {
+    position: fixed !important;
+    right: 1.25rem !important;
+    bottom: 1.25rem !important;
+    z-index: 2147483647 !important;       /* sit above literally everything */
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    padding: 0.85rem 1.15rem !important;
+    margin: 0 !important;
+    background: linear-gradient(135deg, #f43f5e, #ec4899) !important;
+    background-color: #ec4899 !important; /* fallback if gradient unsupported */
     color: #ffffff !important;
-    border-radius: 999px;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 0.95rem;
+    -webkit-text-fill-color: #ffffff !important; /* override any browser dark-mode link color */
+    border: none !important;
+    border-radius: 999px !important;
+    text-decoration: none !important;
+    text-decoration-line: none !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    line-height: 1.2 !important;
+    font-family: var(--font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif) !important;
     box-shadow: 0 10px 25px rgba(236, 72, 153, 0.45),
-                0 4px 10px rgba(0, 0, 0, 0.15);
-    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
-    animation: support-fab-pulse 2.4s ease-in-out infinite;
+                0 4px 10px rgba(0, 0, 0, 0.15) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease !important;
+    animation: support-fab-pulse 2.4s ease-in-out infinite !important;
+    /* Ensure the element is its own containing block in case an ancestor
+       has filter/transform/perspective set, which would otherwise break
+       position: fixed on some browsers. */
+    transform: translateZ(0);
+    isolation: isolate;
+    contain: layout style;
 }
 
 .support-fab i {
-    font-size: 1.05rem;
-    animation: support-fab-heart 1.6s ease-in-out infinite;
+    font-size: 1.05rem !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    animation: support-fab-heart 1.6s ease-in-out infinite !important;
+    display: inline-block !important;
+    font-style: normal !important;
+    line-height: 1 !important;
 }
 
 .support-fab:hover {
-    transform: translateY(-2px) scale(1.03);
+    transform: translateY(-2px) scale(1.03) translateZ(0) !important;
     box-shadow: 0 14px 30px rgba(236, 72, 153, 0.55),
-                0 6px 14px rgba(0, 0, 0, 0.18);
-    filter: brightness(1.05);
+                0 6px 14px rgba(0, 0, 0, 0.18) !important;
+    filter: brightness(1.05) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
 }
 
 .support-fab:focus-visible {
-    outline: 3px solid #fff;
-    outline-offset: 3px;
-    box-shadow: 0 0 0 6px rgba(236, 72, 153, 0.5);
+    outline: 3px solid #fff !important;
+    outline-offset: 3px !important;
+    box-shadow: 0 0 0 6px rgba(236, 72, 153, 0.5) !important;
+    color: #ffffff !important;
 }
 
 @keyframes support-fab-pulse {
