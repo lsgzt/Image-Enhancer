@@ -243,19 +243,13 @@ function initializeTelegramMiniApp() {
         // 10. Show the "Running in Telegram" banner unless user dismissed it
         try {
             if (localStorage.getItem('tma_banner_dismissed') !== '1') {
-                const banner = document.getElementById('tmaBanner');
-                if (banner) {
-                    banner.hidden = false;
-                    const closeBtn = document.getElementById('tmaBannerClose');
-                    if (closeBtn) {
-                        closeBtn.addEventListener('click', () => {
-                            banner.hidden = true;
-                            try { localStorage.setItem('tma_banner_dismissed', '1'); } catch (e) {}
-                        });
-                    }
-                }
+                showTmaBanner();
             }
         } catch (e) {}
+
+        // Wire up the close button independently of banner display logic
+        // so that re-renders or caching can't strand it without a handler.
+        wireTmaBannerDismiss();
 
         // 11. Disable the page-zoom gesture that conflicts with Telegram pull-to-close
         try {
@@ -274,6 +268,56 @@ function initializeTelegramMiniApp() {
             area.style.opacity = '0.6';
         }
     }
+}
+
+/**
+ * Show the "Running in Telegram" banner. Idempotent.
+ */
+function showTmaBanner() {
+    const banner = document.getElementById('tmaBanner');
+    if (!banner) return;
+    banner.hidden = false;
+    // Force layout so the close button is interactable immediately in TMA
+    // webviews (some Android webviews delay the first paint of newly-shown
+    // elements which can swallow the very first tap).
+    void banner.offsetHeight;
+}
+
+/**
+ * Wire the banner's close button. Called once at startup, and re-arms
+ * itself after a successful dismiss so the banner stays gone.
+ */
+function wireTmaBannerDismiss() {
+    const banner = document.getElementById('tmaBanner');
+    const closeBtn = document.getElementById('tmaBannerClose');
+    if (!banner || !closeBtn) return;
+
+    const dismiss = (event) => {
+        // Block the global link-rerouter and any other delegated handlers
+        // from seeing this click.
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            if (typeof event.stopImmediatePropagation === 'function') {
+                event.stopImmediatePropagation();
+            }
+        }
+        banner.hidden = true;
+        try { localStorage.setItem('tma_banner_dismissed', '1'); } catch (e) {}
+    };
+
+    // Use multiple event types for maximum compatibility with
+    // Telegram's webviews (which can be flaky about click vs. touch).
+    closeBtn.addEventListener('click', dismiss);
+    closeBtn.addEventListener('touchend', dismiss, { passive: false });
+    closeBtn.addEventListener('pointerup', dismiss);
+
+    // Keyboard accessibility — Enter / Space on focused button.
+    closeBtn.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+            dismiss(e);
+        }
+    });
 }
 
 function rerouteExternalLinksForTelegram(tma) {
