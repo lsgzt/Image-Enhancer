@@ -28,6 +28,9 @@ const fidelityValue = document.getElementById('fidelityValue');
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
+    // Run the (async) TMA init in the background so we never block the
+    // rest of the page — including the manual theme toggle, which
+    // would otherwise be unreachable if the SDK load is slow.
     initializeTelegramMiniApp();
     initializeEventListeners();
     initializeTheme();
@@ -108,8 +111,13 @@ function resolveInitialTheme() {
     if (getUserOverride()) {
         return getStoredTheme() || (systemPrefersDark() ? 'dark' : 'light');
     }
-    // 2. If Telegram gave us a colorScheme, trust it first
-    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.colorScheme) {
+    // 2. If we are inside a Telegram webview AND the SDK has loaded
+    //    with a colorScheme, trust it first. We must use the
+    //    isTelegramMiniApp() guard — not just `window.Telegram` —
+    //    because in a regular browser window.Telegram can be present
+    //    from a leaked SDK script.
+    if (isTelegramMiniApp()
+        && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.colorScheme) {
         return window.Telegram.WebApp.colorScheme === 'dark' ? 'dark' : 'light';
     }
     // 3. Otherwise fall back to OS preference
@@ -137,8 +145,9 @@ function toggleTheme() {
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     applyTheme(newTheme);
     setUserOverride(true); // mark this as a deliberate user choice
-    // Light haptic on Telegram
-    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+    // Light haptic on Telegram (only when we are actually inside TMA)
+    if (isTelegramMiniApp()
+        && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
         try { window.Telegram.WebApp.HapticFeedback.selectionChanged(); } catch (e) {}
     }
 }
@@ -168,12 +177,78 @@ function setupSystemThemeListener() {
 // ============================================================
 // Telegram Mini App integration
 // ============================================================
-function isTelegramMiniApp() {
-    return !!(window.Telegram && window.Telegram.WebApp);
+
+// Telegram appends one of these query parameters to the URL when the
+// page is opened inside a Telegram webview. They are added by the
+// Telegram client itself, so they are a reliable signal that the page
+// is actually running inside a TMA — unlike window.Telegram.WebApp
+// which can leak into the global scope via the SDK script even in
+// regular browsers.
+const _TMA_URL_PARAMS = ['tgWebAppData', 'tgWebAppVersion', 'tgWebAppPlatform', 'tgWebAppThemeParams'];
+
+function _looksLikeTelegramWebviewUrl() {
+    if (typeof window === 'undefined' || !window.location) return false;
+    const search = (window.location.search || '').toLowerCase();
+    if (!search) return false;
+    for (const key of _TMA_URL_PARAMS) {
+        if (search.indexOf(key.toLowerCase() + '=') !== -1) return true;
+    }
+    return false;
 }
 
-function initializeTelegramMiniApp() {
-    const tma = isTelegramMiniApp() ? window.Telegram.WebApp : null;
+// The User-Agent of Telegram's webview contains the substring "Telegram"
+// (Android webview reports "Telegram-Android/<ver>" / iOS reports
+// "Telegram-iOS/<ver>"). This is a secondary signal — useful as a
+// belt-and-suspenders check but never on its own, since user-agents are
+// trivially spoofable and a few browsers also have "Telegram" in their
+// UA (older versions of some webview wrappers). Combined with the URL
+// param check, false positives are extremely unlikely.
+function _userAgentMentionsTelegram() {
+    return typeof navigator !== 'undefined'
+        && /Telegram/i.test(navigator.userAgent || '');
+}
+
+// A cached promise so we only attempt to load the SDK once. The SDK
+// is only fetched when we have a real reason to believe the page is
+// inside a Telegram webview, so a regular browser never sees
+// `window.Telegram` and the rest of the code can trust isTelegramMiniApp.
+let _tmaSdkPromise = null;
+function _loadTelegramSdk() {
+    if (_tmaSdkPromise) return _tmaSdkPromise;
+    _tmaSdkPromise = new Promise((resolve) => {
+        const s = document.createElement('script');
+        s.src = 'https://telegram.org/js/telegram-web-app.js';
+        s.async = true;
+        s.onload = () => resolve(true);
+        s.onerror = () => resolve(false);
+        document.head.appendChild(s);
+    });
+    return _tmaSdkPromise;
+}
+
+function isTelegramMiniApp() {
+    // Cheap synchronous check: are we even in a Telegram webview by
+    // URL or UA? If not, we are DEFINITELY not in a TMA — regardless
+    // of whether window.Telegram happens to exist.
+    return _looksLikeTelegramWebviewUrl() || _userAgentMentionsTelegram();
+}
+
+async function ensureTelegramSdkLoaded() {
+    if (!isTelegramMiniApp()) return null;
+    if (window.Telegram && window.Telegram.WebApp) return window.Telegram.WebApp;
+    const ok = await _loadTelegramSdk();
+    if (ok && window.Telegram && window.Telegram.WebApp) {
+        return window.Telegram.WebApp;
+    }
+    return null;
+}
+
+async function initializeTelegramMiniApp() {
+    // Only fetch the Telegram SDK if the URL / UA says we are inside
+    // a Telegram webview. This is the bit that fixes the bug where
+    // browsers like Brave and Comet would otherwise see window.Telegram
+    // and mistakenly enter TMA mode.
+    const tma = await ensureTelegramSdkLoaded();
 
     if (tma) {
         // 1. Mark the root so CSS can adapt

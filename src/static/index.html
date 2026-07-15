@@ -16,8 +16,12 @@
     <meta name="theme-color" content="#6366f1">
     <meta name="color-scheme" content="light dark">
 
-    <!-- Telegram Mini App SDK (no-op outside Telegram) -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- NOTE: The Telegram Mini App SDK is NOT loaded eagerly. Loading
+         it on every page pollutes window.Telegram in regular browsers
+         (Brave, Comet, etc.) and makes our detection think we're inside
+         a Telegram webview when we are not. The SDK is loaded
+         dynamically, only when the page is actually opened from a
+         Telegram bot (detected via tgWebApp* URL params). -->
 
     <!-- Telegram Mini App viewport (only takes effect in TMA) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
