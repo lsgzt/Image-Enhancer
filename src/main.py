@@ -21,8 +21,8 @@ from src.routes.telegram import telegram_bp # Telegram Mini App endpoints
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
-# Cache static assets (images, css, js) for 1 day to survive Render free-tier cold starts
-app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 86400
+# Disable static file caching so changes take effect immediately on redeploy
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
 CORS(app) # Enable CORS for all origins
 

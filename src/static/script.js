@@ -260,10 +260,20 @@ async function ensureTelegramSdkLoaded() {
 }
 
 async function initializeTelegramMiniApp() {
-    // Only fetch the Telegram SDK if the URL / UA says we are inside
-    // a Telegram webview. This is the bit that fixes the bug where
-    // browsers like Brave and Comet would otherwise see window.Telegram
-    // and mistakenly enter TMA mode.
+    // Definitive check: are we actually in Telegram?
+    const isTma = isTelegramMiniApp();
+    
+    // If NOT in Telegram, ensure banner is hidden and STOP.
+    if (!isTma) {
+        const banner = document.getElementById('tmaBanner');
+        if (banner) {
+            banner.hidden = true;
+            banner.style.display = 'none';
+            banner.style.setProperty('display', 'none', 'important');
+        }
+        return;
+    }
+
     const tma = await ensureTelegramSdkLoaded();
 
     if (tma) {
@@ -390,16 +400,13 @@ function wireTmaBannerDismiss() {
     if (!banner || !closeBtn) return;
 
     const dismiss = (event) => {
-        // Block the global link-rerouter and any other delegated handlers
-        // from seeing this click.
+        console.log('Banner dismiss triggered');
         if (event) {
             event.preventDefault();
             event.stopPropagation();
-            if (typeof event.stopImmediatePropagation === 'function') {
-                event.stopImmediatePropagation();
-            }
         }
         banner.hidden = true;
+        banner.style.display = 'none';
         banner.style.setProperty('display', 'none', 'important');
         try { localStorage.setItem('tma_banner_dismissed', '1'); } catch (e) {}
     };
