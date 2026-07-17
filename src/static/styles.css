@@ -996,6 +996,9 @@ input:focus,
     top: 0;
     z-index: 1000;
 }
+.tma-banner[hidden] {
+    display: none !important;
+}
 .tma-banner i { font-size: 1.1rem; }
 .tma-banner span { flex: 1; }
 .tma-banner button,

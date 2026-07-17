@@ -335,6 +335,12 @@ async function initializeTelegramMiniApp() {
         try {
             if (localStorage.getItem('tma_banner_dismissed') !== '1') {
                 showTmaBanner();
+            } else {
+                const banner = document.getElementById('tmaBanner');
+                if (banner) {
+                    banner.hidden = true;
+                    banner.style.display = 'none';
+                }
             }
         } catch (e) {}
         
@@ -367,6 +373,7 @@ function showTmaBanner() {
     const banner = document.getElementById('tmaBanner');
     if (!banner) return;
     banner.hidden = false;
+    banner.style.display = 'flex';
     // Force layout so the close button is interactable immediately in TMA
     // webviews (some Android webviews delay the first paint of newly-shown
     // elements which can swallow the very first tap).
