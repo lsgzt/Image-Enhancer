@@ -244,9 +244,20 @@ function isTelegramMiniApp() {
     if (override === true)  return true;
     if (override === false) return false;
 
-    // Only trust URL parameters. UA is too spoofable/unreliable and
-    // causes false positives in many browsers.
-    return _looksLikeTelegramWebviewUrl();
+    // Check URL parameters first — they are the most reliable.
+    if (_looksLikeTelegramWebviewUrl()) return true;
+
+    // Secondary check: if the Telegram SDK is already present in the
+    // global scope and HAS valid initData, we are almost certainly
+    // inside a TMA. This covers cases where the user navigates within
+    // the app and the URL params are lost but the window persists.
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
+        return true;
+    }
+
+    // Tertiary check: UA. Only use this if we're not sure, but it helps
+    // catch legitimate TMA sessions where params might have been stripped.
+    return _userAgentMentionsTelegram();
 }
 
 async function ensureTelegramSdkLoaded() {
@@ -274,7 +285,20 @@ async function initializeTelegramMiniApp() {
         return;
     }
 
+    // If we think we're in TMA, we MUST load the SDK to be sure.
     const tma = await ensureTelegramSdkLoaded();
+    
+    // If the SDK loaded but has no initData, it was a false positive
+    // (e.g. a regular browser with a "Telegram" UA).
+    if (!tma || !tma.initData) {
+        const banner = document.getElementById('tmaBanner');
+        if (banner) {
+            banner.hidden = true;
+            banner.style.display = 'none';
+            banner.style.setProperty('display', 'none', 'important');
+        }
+        return;
+    }
 
     if (tma) {
         // 1. Mark the root so CSS can adapt
