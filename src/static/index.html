@@ -15,6 +15,9 @@
     <meta name="rating" content="general">
     <meta name="theme-color" content="#6366f1">
     <meta name="color-scheme" content="light dark">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
 
     <!-- NOTE: The Telegram Mini App SDK is NOT loaded eagerly. Loading
          it on every page pollutes window.Telegram in regular browsers
@@ -52,9 +55,11 @@
     <meta name="twitter:image" content="https://enhanceit.onrender.com/og-image.jpg">
     <meta name="twitter:image:alt" content="Before and after comparison of an AI-enhanced face restoration: blurred old photo on the left, sharp clear face on the right.">
 
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="seo-sections.css">
-    <link rel="stylesheet" href="styles.css">
+    <!-- Stylesheets (cache-busted with a build version to force a
+         fresh download on every deploy, defeating any browser or
+         CDN cache that might be serving stale CSS/JS) -->
+    <link rel="stylesheet" href="seo-sections.css?v=20260715-1">
+    <link rel="stylesheet" href="styles.css?v=20260715-1">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
@@ -587,8 +592,8 @@
         <span class="support-fab-label">Support</span>
     </a>
 
-    <!-- Scripts -->
+    <!-- Scripts (cache-busted) -->
     <script src="https://unpkg.com/img-comparison-slider@8/dist/index.js"></script>
-    <script src="script.js"></script>
+    <script src="script.js?v=20260715-1"></script>
 </body>
 </html>
