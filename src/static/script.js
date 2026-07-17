@@ -244,10 +244,9 @@ function isTelegramMiniApp() {
     if (override === true)  return true;
     if (override === false) return false;
 
-    // Cheap synchronous check: are we even in a Telegram webview by
-    // URL or UA? If not, we are DEFINITELY not in a TMA — regardless
-    // of whether window.Telegram happens to exist.
-    return _looksLikeTelegramWebviewUrl() || _userAgentMentionsTelegram();
+    // Only trust URL parameters. UA is too spoofable/unreliable and
+    // causes false positives in many browsers.
+    return _looksLikeTelegramWebviewUrl();
 }
 
 async function ensureTelegramSdkLoaded() {
@@ -338,8 +337,9 @@ async function initializeTelegramMiniApp() {
                 showTmaBanner();
             }
         } catch (e) {}
-        // Close button is wired via inline onclick in index.html
-        // so we don't need to re-attach listeners here.
+        
+        // 11. Wire the banner's close button (replaces inline handlers for reliability)
+        wireTmaBannerDismiss();
 
         // 11. Disable the page-zoom gesture that conflicts with Telegram pull-to-close
         try {
@@ -393,6 +393,7 @@ function wireTmaBannerDismiss() {
             }
         }
         banner.hidden = true;
+        banner.style.setProperty('display', 'none', 'important');
         try { localStorage.setItem('tma_banner_dismissed', '1'); } catch (e) {}
     };
 

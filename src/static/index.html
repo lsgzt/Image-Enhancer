@@ -200,39 +200,10 @@
            role="button"
            tabindex="0"
            aria-label="Dismiss banner"
-           onclick="dismissTmaBanner(event); return false;"
-           onpointerup="dismissTmaBanner(event); return false;"
-           ontouchend="dismissTmaBanner(event); return false;"
            style="cursor:pointer; -webkit-tap-highlight-color: rgba(255,255,255,0.3); touch-action: manipulation; user-select: none; -webkit-user-select: none;">
             <i class="fas fa-times" aria-hidden="true"></i>
         </a>
     </div>
-    <script>
-    // Inline, globally-exposed so the inline onclick attribute on the
-    // close button can always find it, no matter what loads first.
-    // This MUST be defined as a top-level function (not a const arrow)
-    // so older webviews and strict CSPs don't reject it.
-    function dismissTmaBanner(event) {
-        try {
-            if (event) {
-                event.preventDefault();
-                event.stopPropagation();
-                if (typeof event.stopImmediatePropagation === 'function') {
-                    event.stopImmediatePropagation();
-                }
-            }
-        } catch (e) {}
-        var b = document.getElementById('tmaBanner');
-        if (b) {
-            b.hidden = true;
-            b.style.display = 'none';
-        }
-        try { localStorage.setItem('tma_banner_dismissed', '1'); } catch (e) {}
-        return false;
-    }
-    // Expose for any non-inline callers too
-    window.dismissTmaBanner = dismissTmaBanner;
-    </script>
     <!-- Skip to main content link -->
     <a href="#mainContent" class="skip-link">Skip to main content</a>
 
