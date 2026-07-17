@@ -186,14 +186,38 @@
     </script>
 </head>
 <body>
-    <!-- Telegram Mini App banner (hidden by default, shown by JS when inside Telegram) -->
+    <!-- Telegram Mini App banner (hidden by default, shown by JS when inside Telegram).
+         The close button uses an inline onclick handler for maximum compatibility with
+         Telegram's webview on Android, which can be flaky about addEventListener on
+         elements that were initially hidden. -->
     <div id="tmaBanner" class="tma-banner" role="status" aria-live="polite" hidden>
         <i class="fab fa-telegram" aria-hidden="true"></i>
         <span>Running inside Telegram Mini App</span>
-        <button id="tmaBannerClose" type="button" aria-label="Dismiss banner">
+        <button id="tmaBannerClose" type="button" aria-label="Dismiss banner"
+                onclick="dismissTmaBanner(event)">
             <i class="fas fa-times" aria-hidden="true"></i>
         </button>
     </div>
+    <script>
+    // Inline, globally-exposed so the inline onclick attribute on the
+    // close button can always find it, no matter what loads first.
+    function dismissTmaBanner(event) {
+        try {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                if (typeof event.stopImmediatePropagation === 'function') {
+                    event.stopImmediatePropagation();
+                }
+            }
+        } catch (e) {}
+        var b = document.getElementById('tmaBanner');
+        if (b) b.hidden = true;
+        try { localStorage.setItem('tma_banner_dismissed', '1'); } catch (e) {}
+    }
+    // Expose for any non-inline callers too
+    window.dismissTmaBanner = dismissTmaBanner;
+    </script>
     <!-- Skip to main content link -->
     <a href="#mainContent" class="skip-link">Skip to main content</a>
 

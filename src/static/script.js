@@ -196,6 +196,18 @@ function _looksLikeTelegramWebviewUrl() {
     return false;
 }
 
+// Manual override: append ?notma=1 to any URL to force the page to
+// behave as a normal browser, regardless of URL params / UA. Useful
+// for testing the regular-browser experience from a Telegram bot link
+// without having to leave the bot.
+function _manualTmaOverride() {
+    if (typeof window === 'undefined' || !window.location) return null;
+    const search = (window.location.search || '').toLowerCase();
+    if (search.indexOf('notma=1') !== -1) return false;
+    if (search.indexOf('tma=1')   !== -1) return true;
+    return null;
+}
+
 // The User-Agent of Telegram's webview contains the substring "Telegram"
 // (Android webview reports "Telegram-Android/<ver>" / iOS reports
 // "Telegram-iOS/<ver>"). This is a secondary signal — useful as a
@@ -227,6 +239,11 @@ function _loadTelegramSdk() {
 }
 
 function isTelegramMiniApp() {
+    // Manual ?tma=1 / ?notma=1 override always wins.
+    const override = _manualTmaOverride();
+    if (override === true)  return true;
+    if (override === false) return false;
+
     // Cheap synchronous check: are we even in a Telegram webview by
     // URL or UA? If not, we are DEFINITELY not in a TMA — regardless
     // of whether window.Telegram happens to exist.
