@@ -187,20 +187,31 @@
 </head>
 <body>
     <!-- Telegram Mini App banner (hidden by default, shown by JS when inside Telegram).
-         The close button uses an inline onclick handler for maximum compatibility with
-         Telegram's webview on Android, which can be flaky about addEventListener on
-         elements that were initially hidden. -->
+         The close button uses an <a> with href="javascript:..." for maximum
+         compatibility with Telegram's webview on both iOS and Android. <button>
+         elements are sometimes swallowed by Telegram's gesture handlers; an
+         <a> with a javascript: href is the most reliable way to invoke JS. -->
     <div id="tmaBanner" class="tma-banner" role="status" aria-live="polite" hidden>
         <i class="fab fa-telegram" aria-hidden="true"></i>
         <span>Running inside Telegram Mini App</span>
-        <button id="tmaBannerClose" type="button" aria-label="Dismiss banner"
-                onclick="dismissTmaBanner(event)">
+        <a href="javascript:void(0)"
+           id="tmaBannerClose"
+           class="tma-banner-close"
+           role="button"
+           tabindex="0"
+           aria-label="Dismiss banner"
+           onclick="dismissTmaBanner(event); return false;"
+           onpointerup="dismissTmaBanner(event); return false;"
+           ontouchend="dismissTmaBanner(event); return false;"
+           style="cursor:pointer; -webkit-tap-highlight-color: rgba(255,255,255,0.3); touch-action: manipulation; user-select: none; -webkit-user-select: none;">
             <i class="fas fa-times" aria-hidden="true"></i>
-        </button>
+        </a>
     </div>
     <script>
     // Inline, globally-exposed so the inline onclick attribute on the
     // close button can always find it, no matter what loads first.
+    // This MUST be defined as a top-level function (not a const arrow)
+    // so older webviews and strict CSPs don't reject it.
     function dismissTmaBanner(event) {
         try {
             if (event) {
@@ -212,8 +223,12 @@
             }
         } catch (e) {}
         var b = document.getElementById('tmaBanner');
-        if (b) b.hidden = true;
+        if (b) {
+            b.hidden = true;
+            b.style.display = 'none';
+        }
         try { localStorage.setItem('tma_banner_dismissed', '1'); } catch (e) {}
+        return false;
     }
     // Expose for any non-inline callers too
     window.dismissTmaBanner = dismissTmaBanner;

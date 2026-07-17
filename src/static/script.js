@@ -338,10 +338,8 @@ async function initializeTelegramMiniApp() {
                 showTmaBanner();
             }
         } catch (e) {}
-
-        // Wire up the close button independently of banner display logic
-        // so that re-renders or caching can't strand it without a handler.
-        wireTmaBannerDismiss();
+        // Close button is wired via inline onclick in index.html
+        // so we don't need to re-attach listeners here.
 
         // 11. Disable the page-zoom gesture that conflicts with Telegram pull-to-close
         try {
